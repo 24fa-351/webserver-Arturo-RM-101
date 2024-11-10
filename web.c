@@ -37,7 +37,7 @@ void* handleConnection(void* ptr)
             close(a_client);
             return NULL;
         } else if (result == CLOSED_CONNECTION) {
-            printf("Connection termonated\n");
+            printf("Connection terminated\n");
             close(a_client);
             return NULL;
         }
@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
 
         pthread_t thread_id;
         pthread_create(&thread_id, NULL, handleConnection, client_fd_location);
-        pthread_detach(client_fd);
+        pthread_detach(thread_id);
         //handleConnection(client_fd);
         
     }

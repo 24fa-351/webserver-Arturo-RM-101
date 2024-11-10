@@ -1,2 +1,2 @@
-web: web.c
-	gcc web.c -o web
+web: web.c messages.c
+	gcc web.c messages.c -o web

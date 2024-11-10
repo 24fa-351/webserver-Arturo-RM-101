@@ -6,10 +6,17 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/socket.h>
+#include "messages.h"
 
 // This will be worked on as PORT 46645 connect correctly
 #define STARTING_PORT 80
 #define LISTEN_BACKLOG 5
+
+int respond_client_message(int a_client, client_http_message *message_http) {
+    char* message_response = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n";
+    write(a_client, message_response, strlen(message_response));
+    return 0;
+}
 
 void* handleConnection(void* ptr)
 {
@@ -19,14 +26,25 @@ void* handleConnection(void* ptr)
 
     char buffer[1024];
 
-    int bytes_read = read(a_client, buffer, sizeof(buffer));
-    while (bytes_read != -1 && bytes_read != 0) {
-        printf("Received: %s\n", buffer);
-        write(a_client, buffer, bytes_read);
+    while(1) {
+        client_http_message *message_http;
+        results_http result;
 
-        bytes_read = read(a_client, buffer, sizeof(buffer));
+        read_given_client_message(a_client, &message_http, &result);
+
+        if(result == BAD_REQUEST) {
+            printf("Bad Request Made\n");
+            close(a_client);
+            return NULL;
+        } else if (result == CLOSED_CONNECTION) {
+            printf("Connection termonated\n");
+            close(a_client);
+            return NULL;
+        }
+        respond_client_message (a_client, message_http);
+        free_client_message(message_http);
     }
-    printf("Connection terminated\n");
+    printf("Client %d terminated\n", a_client);
     return NULL;
 }
 

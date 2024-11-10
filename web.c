@@ -13,8 +13,18 @@
 #define LISTEN_BACKLOG 5
 
 int respond_client_message(int a_client, client_http_message *message_http) {
-    char* message_response = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n";
-    write(a_client, message_response, strlen(message_response));
+    char *formatting = "\nHTTP/1.1 200 OK\r\n" "Content-Length: %d\r\n" "Content-Type: text/plain\r\n\r\n";
+    char response_buffer[1024];
+
+    char *body = message_http -> body;
+    int body_length = message_http -> body ? strlen(message_http -> body) : 0;
+
+    int length_of_response = snprintf(response_buffer, sizeof(response_buffer), formatting, body_length);
+
+    write(a_client, response_buffer, length_of_response);
+    if (body_length > 0) {
+        write(a_client, message_http -> body, strlen(body));
+    }
     return 0;
 }
 

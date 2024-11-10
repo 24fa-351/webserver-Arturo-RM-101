@@ -40,23 +40,49 @@ void read_given_client_message(int a_client, client_http_message** message_struc
         }
     }
 
-    (*message_structure) -> method = strdup(buffer + 4);
-    char* start_path = buffer + 4;
-    char* end_path = strchr(buffer + 4, ' ');
-    char* end_http = strchr(end_path, ' ');
+    // (*message_structure) -> method = strdup(buffer + 4);
+    // char* start_path = buffer + 4;
+    // char* end_path = strchr(buffer + 4, ' ');
+    // char* end_http = strchr(end_path, ' ');
+    
+    char *method = strtok(buffer, " ");
+    char *path = strtok(NULL, " ");
+    char *version = strtok(NULL, "\r\n");
 
-    if (end_path != NULL) {
-        (*message_structure) -> path = strndup(start_path, end_path - start_path);
+    if (!method || !path || !version) {
+        *result = BAD_REQUEST;
+        free(*message_structure);
+        return;
     }
 
-    if (strcmp((*message_structure) -> path, "/calc") == 0) {
+    (*message_structure)-> method = strdup(method);
+    (*message_structure)-> path = strdup(path);
+    (*message_structure)-> http_vnum = strdup(version);
+
+    char *start_path = strtok(path, "/");
+    char *first_sub_p = NULL;
+    char *second_sub_p = NULL;
+
+    // if (end_path != NULL) {
+    //     (*message_structure) -> path = strndup(start_path, end_path - start_path);
+    // }
+
+    if (strcmp(start_path, "calc") == 0) {
         printf("Path to calc\n");
+
+        first_sub_p = strtok(NULL, "/");
+        printf("a = %s\n", first_sub_p);
+
+        second_sub_p = strtok(NULL, "/");
+        printf("b = %s\n", second_sub_p);
+        
     } else if (strcmp((*message_structure) -> path, "/stats") == 0) {
         printf("Path to stats\n");
     } else if (strcmp((*message_structure) -> path, "/static") == 0) {
         printf("Path to static\n");
     }
     
+
     *result = MESSAGE;
 }
 

@@ -6,6 +6,25 @@
 #include <string.h>
 #include "messages.h"
 
+char* sum(char* path_one, char* path_two) {
+    if (!path_one || !path_two) {
+        return NULL;
+    }
+
+    int first_num = atoi(path_one);
+    int second_num = atoi(path_two);
+    int sum = first_num + second_num;
+
+    int sum_size = snprintf(NULL, 0, "a = %d\nb = %d\nsum = %d\n\n", first_num, second_num, sum) + 1;
+    char* result = malloc(sum_size);
+    
+    if (result != NULL) {
+        snprintf(result, sum_size, "a = %d\nb = %d\nsum = %d\n\n", first_num, second_num, sum);
+    }
+
+    return result;
+}
+
 bool check_finished_message(char* buffer) {
     if (strlen(buffer) < 10) {
         return false;
@@ -75,7 +94,9 @@ void read_given_client_message(int a_client, client_http_message** message_struc
 
         second_sub_p = strtok(NULL, "/");
         printf("b = %s\n", second_sub_p);
-        
+
+        (*message_structure) -> body = sum(first_sub_p, second_sub_p);
+
     } else if (strcmp((*message_structure) -> path, "/stats") == 0) {
         printf("Path to stats\n");
     } else if (strcmp((*message_structure) -> path, "/static") == 0) {

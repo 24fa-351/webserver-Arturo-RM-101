@@ -4,7 +4,27 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
+#include <fcntl.h>
 #include "messages.h"
+
+#define MAX_FILE_SIZE 1000000
+
+char* static_path(char* path) {
+
+    fprintf(stderr, "I got here '%s'\n", path);
+    char *buffer = malloc(MAX_FILE_SIZE);
+    int fd = open(path + 1, O_RDONLY);
+    int number_of_bytes_read = read(fd, buffer, MAX_FILE_SIZE);
+    if (number_of_bytes_read <= 0) {
+        fprintf(stderr, "Cannot access %s\n", path);
+        exit(1);
+    }
+    buffer[number_of_bytes_read] = '\0';
+    char *result = strdup(buffer);
+    free(buffer);
+    return result;
+
+}
 
 char* sum(char* path_one, char* path_two) {
     if (!path_one || !path_two) {
@@ -64,9 +84,11 @@ void read_given_client_message(int a_client, client_http_message** message_struc
     // char* end_path = strchr(buffer + 4, ' ');
     // char* end_http = strchr(end_path, ' ');
     
-    char *method = strtok(buffer, " ");
-    char *path = strtok(NULL, " ");
-    char *version = strtok(NULL, "\r\n");
+    char method[1000];
+    char path[1000];
+    char version[1000];
+    int length_parsed = 0;
+    int num_parsed = sscanf(buffer, "%s %s %s%n", method, path, version, &length_parsed);
 
     if (!method || !path || !version) {
         *result = BAD_REQUEST;
@@ -78,9 +100,12 @@ void read_given_client_message(int a_client, client_http_message** message_struc
     (*message_structure)-> path = strdup(path);
     (*message_structure)-> http_vnum = strdup(version);
 
-    char *start_path = strtok(path, "/");
-    char *first_sub_p = NULL;
-    char *second_sub_p = NULL;
+    // Replacement for strtok is needed sscanf
+    char start_path[1000];
+    char first_sub_p[1000];
+    char second_sub_p[1000];
+    // Process the 3 path components
+    sscanf(path, "/%[^/]/%[^/]/%[^/]", start_path, first_sub_p, second_sub_p);
 
     // if (end_path != NULL) {
     //     (*message_structure) -> path = strndup(start_path, end_path - start_path);
@@ -89,18 +114,19 @@ void read_given_client_message(int a_client, client_http_message** message_struc
     if (strcmp(start_path, "calc") == 0) {
         printf("Path to calc\n");
 
-        first_sub_p = strtok(NULL, "/");
         printf("a = %s\n", first_sub_p);
 
-        second_sub_p = strtok(NULL, "/");
         printf("b = %s\n", second_sub_p);
 
         (*message_structure) -> body = sum(first_sub_p, second_sub_p);
 
-    } else if (strcmp((*message_structure) -> path, "/stats") == 0) {
+    } else if (strcmp((*message_structure) -> path, "stats") == 0) {
         printf("Path to stats\n");
-    } else if (strcmp((*message_structure) -> path, "/static") == 0) {
+    } else if (strcmp(start_path, "static") == 0) {
         printf("Path to static\n");
+        printf("Static path %s\n", (*message_structure)-> path);
+        (*message_structure) -> body = static_path(path);
+        //(*message_structure) -> body = static_path((*message_structure)-> path);
     }
     
 
